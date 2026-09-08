@@ -28,9 +28,11 @@ fun AddProductScreen(
     var location by remember { mutableStateOf("") }
     var code by remember { mutableStateOf(uiState.lastScannedCode ?: "") }
 
-    LaunchedEffect(uiState.error) {
-        if (uiState.error == null && !uiState.isLoading && name.isNotEmpty()) {
-                                }
+    LaunchedEffect(uiState.isProductAdded) {
+        if (uiState.isProductAdded) {
+            viewModel.clearSuccessState()
+            onProductAdded()
+        }
     }
 
     Scaffold(
@@ -105,7 +107,6 @@ fun AddProductScreen(
             LoginButton(
                 onClick = {
                     viewModel.addProduct(name, description, location, code, code)
-                    onProductAdded()
                 },
                 modifier = Modifier.fillMaxWidth()
             )
