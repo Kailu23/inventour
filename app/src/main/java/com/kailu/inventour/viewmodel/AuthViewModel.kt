@@ -2,6 +2,7 @@ package com.kailu.inventour.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.messaging.FirebaseMessaging
 import com.kailu.inventour.model.User
 import com.kailu.inventour.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,11 +28,16 @@ class AuthViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(AuthUiState(user = authRepository.currentUser, isAuthenticated = authRepository.currentUser != null))
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
+    init {
+                authRepository.currentUser?.let { subscribeToUserTopic(it.uid) }
+    }
+
     fun login(email: String, password: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             val result = authRepository.login(email, password)
             result.onSuccess { user ->
+                subscribeToUserTopic(user.uid)
                 _uiState.update { it.copy(user = user, isLoading = false, isAuthenticated = true) }
             }.onFailure { e ->
                 _uiState.update { it.copy(error = e.message, isLoading = false) }
@@ -44,6 +50,7 @@ class AuthViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true, error = null) }
             val result = authRepository.register(name, email, password)
             result.onSuccess { user ->
+                subscribeToUserTopic(user.uid)
                 _uiState.update { it.copy(user = user, isLoading = false, isAuthenticated = true) }
             }.onFailure { e ->
                 _uiState.update { it.copy(error = e.message, isLoading = false) }
@@ -52,8 +59,17 @@ class AuthViewModel @Inject constructor(
     }
 
     fun logout() {
+        authRepository.currentUser?.let { unsubscribeFromUserTopic(it.uid) }
         authRepository.logout()
         _uiState.update { it.copy(user = null, isAuthenticated = false) }
+    }
+
+    private fun subscribeToUserTopic(uid: String) {
+        FirebaseMessaging.getInstance().subscribeToTopic("user_$uid")
+    }
+
+    private fun unsubscribeFromUserTopic(uid: String) {
+        FirebaseMessaging.getInstance().unsubscribeFromTopic("user_$uid")
     }
 
     fun clearError() {
