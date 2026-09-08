@@ -5,13 +5,16 @@ import androidx.lifecycle.viewModelScope
 import com.kailu.inventour.model.ProgressType
 import com.kailu.inventour.model.WarehouseStat
 import com.kailu.inventour.model.WarehouseUiState
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class WarehouseViewModel : ViewModel() {
+@HiltViewModel
+class WarehouseViewModel @Inject constructor() : ViewModel() {
 
     private val _uiState = MutableStateFlow(WarehouseUiState())
     val uiState: StateFlow<WarehouseUiState> = _uiState.asStateFlow()

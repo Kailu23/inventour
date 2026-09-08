@@ -12,7 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.kailu.inventour.model.WarehouseStat
 import com.kailu.inventour.ui.theme.BackgroundGreen
 import com.kailu.inventour.ui.theme.components.DashboardCard
@@ -25,7 +25,7 @@ import com.kailu.inventour.viewmodel.WarehouseViewModel
 fun LandingScreen(
     onNavigateToLogin: () -> Unit = {},
     onNavigateToRegister: () -> Unit = {},
-    viewModel: WarehouseViewModel = viewModel()
+    viewModel: WarehouseViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
