@@ -73,22 +73,67 @@ fun DashboardScreen(
                 )
             },
             floatingActionButton = {
+                Column(horizontalAlignment = Alignment.End) {
+                    FloatingActionButton(
+                        onClick = onNavigateToScanner,
+                        containerColor = SurfaceDark,
+                        contentColor = TextOnDark,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    ) {
+                        Icon(Icons.Default.QrCodeScanner, contentDescription = "Scan")
+                    }
+                    FloatingActionButton(
+                        onClick = onNavigateToAddProduct,
+                        containerColor = SurfaceDark,
+                        contentColor = TextOnDark
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Add Product")
+                    }
+                }
+            },
+            containerColor = BackgroundGreen
+        ) { padding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(horizontal = 24.dp)
+            ) {
+                Text(
+                    text = "Vaše skladište",
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = TextPrimary,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
 
-            if (uiState.isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            } else if (uiState.products.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = "Nema proizvoda u skladištu.", color = TextPrimary)
-                }
-            } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(bottom = 80.dp)
-                ) {
-                    items(uiState.products) { product ->
-                        ProductItem(product)
+                OutlinedTextField(
+                    value = uiState.searchQuery,
+                    onValueChange = { viewModel.onSearchQueryChanged(it) },
+                    placeholder = { Text("Pretraži proizvode...") },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    shape = MaterialTheme.shapes.medium,
+                    singleLine = true
+                )
+
+                if (uiState.isLoading) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                } else if (uiState.filteredProducts.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(text = "Nema rezultata za pretragu.", color = TextPrimary)
+                    }
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(bottom = 80.dp)
+                    ) {
+                        items(uiState.filteredProducts) { product ->
+                            ProductItem(product)
+                        }
                     }
                 }
             }

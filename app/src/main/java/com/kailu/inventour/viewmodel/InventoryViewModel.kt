@@ -16,6 +16,7 @@ data class InventoryUiState(
     val filteredProducts: List<Product> = emptyList(),
     val searchQuery: String = "",
     val isLoading: Boolean = false,
+    val isProductAdded: Boolean = false,
     val error: String? = null,
     val lastScannedCode: String? = null
 )
@@ -88,11 +89,15 @@ class InventoryViewModel @Inject constructor(
             )
             val result = inventoryRepository.addProduct(newProduct)
             result.onSuccess {
-                _uiState.update { it.copy(isLoading = false, error = null) }
+                _uiState.update { it.copy(isLoading = false, isProductAdded = true, error = null) }
             }.onFailure { e ->
-                _uiState.update { it.copy(isLoading = false, error = e.message) }
+                _uiState.update { it.copy(isLoading = false, isProductAdded = false, error = e.message) }
             }
         }
+    }
+
+    fun clearSuccessState() {
+        _uiState.update { it.copy(isProductAdded = false) }
     }
 
     fun onCodeScanned(code: String) {
