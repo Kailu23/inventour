@@ -5,12 +5,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,51 +25,54 @@ import com.kailu.inventour.ui.theme.TextOnDark
 import com.kailu.inventour.ui.theme.TextPrimary
 import com.kailu.inventour.ui.theme.components.WarehouseTopBar
 import com.kailu.inventour.viewmodel.InventoryViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     onNavigateToScanner: () -> Unit,
     onNavigateToAddProduct: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     viewModel: InventoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
 
-    Scaffold(
-        topBar = { WarehouseTopBar() },
-        floatingActionButton = {
-            Column(horizontalAlignment = Alignment.End) {
-                FloatingActionButton(
-                    onClick = onNavigateToScanner,
-                    containerColor = SurfaceDark,
-                    contentColor = TextOnDark,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                ) {
-                    Icon(Icons.Default.QrCodeScanner, contentDescription = "Scan")
-                }
-                FloatingActionButton(
-                    onClick = onNavigateToAddProduct,
-                    containerColor = SurfaceDark,
-                    contentColor = TextOnDark
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Add Product")
-                }
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet {
+                Spacer(Modifier.height(12.dp))
+                NavigationDrawerItem(
+                    label = { Text("Skladište") },
+                    selected = true,
+                    onClick = { scope.launch { drawerState.close() } },
+                    icon = { Icon(Icons.Default.Inventory, contentDescription = null) },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
+                NavigationDrawerItem(
+                    label = { Text("Postavke") },
+                    selected = false,
+                    onClick = {
+                        scope.launch {
+                            drawerState.close()
+                            onNavigateToSettings()
+                        }
+                    },
+                    icon = { Icon(Icons.Default.Settings, contentDescription = null) },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
             }
-        },
-        containerColor = BackgroundGreen
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 24.dp)
-        ) {
-            Text(
-                text = "Vaše skladište",
-                style = MaterialTheme.typography.headlineLarge,
-                color = TextPrimary,
-                modifier = Modifier.padding(vertical = 16.dp)
-            )
+        }
+    ) {
+        Scaffold(
+            topBar = {
+                WarehouseTopBar(
+                    onMenuClick = { scope.launch { drawerState.open() } }
+                )
+            },
+            floatingActionButton = {
 
             if (uiState.isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

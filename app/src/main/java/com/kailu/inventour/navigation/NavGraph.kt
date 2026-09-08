@@ -11,6 +11,7 @@ import com.kailu.inventour.view.RegisterScreen
 import com.kailu.inventour.view.DashboardScreen
 import com.kailu.inventour.view.ScannerScreen
 import com.kailu.inventour.view.AddProductScreen
+import com.kailu.inventour.view.SettingsScreen
 
 
 object Routes {
@@ -20,6 +21,7 @@ object Routes {
     const val DASHBOARD  = "dashboard"
     const val SCANNER    = "scanner"
     const val ADD_PRODUCT = "add_product"
+    const val SETTINGS   = "settings"
 }
 
 @Composable
@@ -63,7 +65,14 @@ fun WarehouseNavGraph(
         composable(Routes.DASHBOARD) {
             DashboardScreen(
                 onNavigateToScanner = { navController.navigate(Routes.SCANNER) },
-                onNavigateToAddProduct = { navController.navigate(Routes.ADD_PRODUCT) }
+                onNavigateToAddProduct = { navController.navigate(Routes.ADD_PRODUCT) },
+                onNavigateToSettings = { navController.navigate(Routes.SETTINGS) }
+            )
+        }
+
+        composable(Routes.SETTINGS) {
+            SettingsScreen(
+                onBack = { navController.popBackStack() }
             )
         }
 

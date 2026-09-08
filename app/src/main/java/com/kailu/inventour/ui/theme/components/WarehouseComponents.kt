@@ -6,10 +6,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,13 +27,27 @@ import com.kailu.inventour.ui.theme.*
 
 
 @Composable
-fun WarehouseTopBar(modifier: Modifier = Modifier) {
+fun WarehouseTopBar(
+    modifier: Modifier = Modifier,
+    onMenuClick: (() -> Unit)? = null
+) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 48.dp, vertical = 28.dp),
+            .padding(horizontal = 24.dp, vertical = 28.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        if (onMenuClick != null) {
+            IconButton(onClick = onMenuClick) {
+                Icon(
+                    Icons.Default.Menu,
+                    contentDescription = "Menu",
+                    tint = SurfaceDark
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+        }
+
                 Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
