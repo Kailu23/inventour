@@ -1,6 +1,7 @@
 package com.kailu.inventour.repository
 
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.userProfileChangeRequest
 import com.kailu.inventour.model.User
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -37,9 +38,15 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun register(name: String, email: String, password: String): Result<User> {
         return try {
             val result = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
-                                    val user = result.user?.let { User(it.uid, it.email, name) }
-            if (user != null) Result.success(user)
-            else Result.failure(Exception("Failed to create user"))
+            val firebaseUser = result.user ?: throw Exception("Failed to create user")
+
+                        val profileUpdates = userProfileChangeRequest {
+                displayName = name
+            }
+            firebaseUser.updateProfile(profileUpdates).await()
+
+            val user = User(firebaseUser.uid, firebaseUser.email, name)
+            Result.success(user)
         } catch (e: Exception) {
             Result.failure(e)
         }
