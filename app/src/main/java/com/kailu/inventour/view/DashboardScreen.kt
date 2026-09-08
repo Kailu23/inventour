@@ -1,0 +1,144 @@
+package com.kailu.inventour.view
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.kailu.inventour.model.Product
+import com.kailu.inventour.ui.theme.BackgroundGreen
+import com.kailu.inventour.ui.theme.SurfaceDark
+import com.kailu.inventour.ui.theme.TextOnDark
+import com.kailu.inventour.ui.theme.TextPrimary
+import com.kailu.inventour.ui.theme.components.WarehouseTopBar
+import com.kailu.inventour.viewmodel.InventoryViewModel
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DashboardScreen(
+    onNavigateToScanner: () -> Unit,
+    onNavigateToAddProduct: () -> Unit,
+    viewModel: InventoryViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    Scaffold(
+        topBar = { WarehouseTopBar() },
+        floatingActionButton = {
+            Column(horizontalAlignment = Alignment.End) {
+                FloatingActionButton(
+                    onClick = onNavigateToScanner,
+                    containerColor = SurfaceDark,
+                    contentColor = TextOnDark,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                ) {
+                    Icon(Icons.Default.QrCodeScanner, contentDescription = "Scan")
+                }
+                FloatingActionButton(
+                    onClick = onNavigateToAddProduct,
+                    containerColor = SurfaceDark,
+                    contentColor = TextOnDark
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Add Product")
+                }
+            }
+        },
+        containerColor = BackgroundGreen
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = 24.dp)
+        ) {
+            Text(
+                text = "Vaše skladište",
+                style = MaterialTheme.typography.headlineLarge,
+                color = TextPrimary,
+                modifier = Modifier.padding(vertical = 16.dp)
+            )
+
+            if (uiState.isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else if (uiState.products.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(text = "Nema proizvoda u skladištu.", color = TextPrimary)
+                }
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(bottom = 80.dp)
+                ) {
+                    items(uiState.products) { product ->
+                        ProductItem(product)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ProductItem(product: Product) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = MaterialTheme.shapes.medium,
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = product.name,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = TextPrimary,
+                    fontWeight = FontWeight.Bold
+                )
+                Surface(
+                    color = SurfaceDark,
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(
+                        text = product.location,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        color = TextOnDark,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = product.description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextPrimary.copy(alpha = 0.7f)
+            )
+            if (!product.barcode.isNullOrEmpty() || !product.qrCode.isNullOrEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "Kod: ${product.barcode ?: product.qrCode}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = SurfaceDark
+                )
+            }
+        }
+    }
+}
