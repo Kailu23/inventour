@@ -12,6 +12,7 @@ import com.kailu.inventour.view.DashboardScreen
 import com.kailu.inventour.view.ScannerScreen
 import com.kailu.inventour.view.AddProductScreen
 import com.kailu.inventour.view.SettingsScreen
+import com.google.firebase.auth.FirebaseAuth
 
 
 object Routes {
@@ -27,7 +28,7 @@ object Routes {
 @Composable
 fun WarehouseNavGraph(
     navController: NavHostController = rememberNavController(),
-    startDestination: String = Routes.LANDING
+    startDestination: String = if (FirebaseAuth.getInstance().currentUser != null) Routes.DASHBOARD else Routes.LANDING
 ) {
     NavHost(navController = navController, startDestination = startDestination) {
 
