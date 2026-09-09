@@ -67,12 +67,20 @@ fun WarehouseNavGraph(
             DashboardScreen(
                 onNavigateToScanner = { navController.navigate(Routes.SCANNER) },
                 onNavigateToAddProduct = { navController.navigate(Routes.ADD_PRODUCT) },
+                onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
+            )
+        }
                 onNavigateToSettings = { navController.navigate(Routes.SETTINGS) }
             )
         }
 
         composable(Routes.SETTINGS) {
             SettingsScreen(
+                onLogout = {
+                    navController.navigate(Routes.LANDING) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
                 onBack = { navController.popBackStack() }
             )
         }
