@@ -51,7 +51,7 @@ object AppModule {
             context,
             InventourDatabase::class.java,
             "inventour_db"
-        ).build()
+        ).fallbackToDestructiveMigration(dropAllTables = true).build()
     }
 
     @Provides
