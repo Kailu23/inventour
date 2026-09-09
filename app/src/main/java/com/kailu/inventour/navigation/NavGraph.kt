@@ -12,6 +12,7 @@ import com.kailu.inventour.view.DashboardScreen
 import com.kailu.inventour.view.ScannerScreen
 import com.kailu.inventour.view.AddProductScreen
 import com.kailu.inventour.view.SettingsScreen
+import com.kailu.inventour.view.OverviewScreen
 import com.google.firebase.auth.FirebaseAuth
 
 
@@ -23,6 +24,7 @@ object Routes {
     const val SCANNER    = "scanner"
     const val ADD_PRODUCT = "add_product"
     const val SETTINGS   = "settings"
+    const val OVERVIEW   = "overview"
 }
 
 @Composable
@@ -68,8 +70,13 @@ fun WarehouseNavGraph(
                 onNavigateToScanner = { navController.navigate(Routes.SCANNER) },
                 onNavigateToAddProduct = { navController.navigate(Routes.ADD_PRODUCT) },
                 onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
+                onNavigateToOverview = { navController.navigate(Routes.OVERVIEW) }
             )
         }
+
+        composable(Routes.OVERVIEW) {
+            OverviewScreen(
+                onNavigateToDashboard = { navController.navigate(Routes.DASHBOARD) },
                 onNavigateToSettings = { navController.navigate(Routes.SETTINGS) }
             )
         }

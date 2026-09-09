@@ -33,6 +33,7 @@ fun DashboardScreen(
     onNavigateToScanner: () -> Unit,
     onNavigateToAddProduct: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onNavigateToOverview: () -> Unit,
     viewModel: InventoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -49,6 +50,18 @@ fun DashboardScreen(
                     selected = true,
                     onClick = { scope.launch { drawerState.close() } },
                     icon = { Icon(Icons.Default.Inventory, contentDescription = null) },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
+                NavigationDrawerItem(
+                    label = { Text("Pregled") },
+                    selected = false,
+                    onClick = {
+                        scope.launch {
+                            drawerState.close()
+                            onNavigateToOverview()
+                        }
+                    },
+                    icon = { Icon(Icons.Default.Analytics, contentDescription = null) },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
                 NavigationDrawerItem(
