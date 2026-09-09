@@ -6,12 +6,13 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.kailu.inventour.model.User
 import com.kailu.inventour.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+sealed class AuthUiEvent {
+    object AuthSuccess : AuthUiEvent()
+}
 
 data class AuthUiState(
     val user: User? = null,
@@ -28,6 +29,9 @@ class AuthViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(AuthUiState(user = authRepository.currentUser, isAuthenticated = authRepository.currentUser != null))
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
+    private val _uiEvent = MutableSharedFlow<AuthUiEvent>()
+    val uiEvent = _uiEvent.asSharedFlow()
+
     init {
                 authRepository.currentUser?.let { subscribeToUserTopic(it.uid) }
     }
@@ -39,6 +43,7 @@ class AuthViewModel @Inject constructor(
             result.onSuccess { user ->
                 subscribeToUserTopic(user.uid)
                 _uiState.update { it.copy(user = user, isLoading = false, isAuthenticated = true) }
+                _uiEvent.emit(AuthUiEvent.AuthSuccess)
             }.onFailure { e ->
                 _uiState.update { it.copy(error = e.message, isLoading = false) }
             }
@@ -52,6 +57,7 @@ class AuthViewModel @Inject constructor(
             result.onSuccess { user ->
                 subscribeToUserTopic(user.uid)
                 _uiState.update { it.copy(user = user, isLoading = false, isAuthenticated = true) }
+                _uiEvent.emit(AuthUiEvent.AuthSuccess)
             }.onFailure { e ->
                 _uiState.update { it.copy(error = e.message, isLoading = false) }
             }
