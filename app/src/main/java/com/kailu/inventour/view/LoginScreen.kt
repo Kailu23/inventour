@@ -16,6 +16,7 @@ import com.kailu.inventour.ui.theme.BackgroundGreen
 import com.kailu.inventour.ui.theme.TextPrimary
 import com.kailu.inventour.ui.theme.components.LoginButton
 import com.kailu.inventour.ui.theme.components.WarehouseTopBar
+import com.kailu.inventour.viewmodel.AuthUiEvent
 import com.kailu.inventour.viewmodel.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,9 +31,11 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
-    LaunchedEffect(uiState.isAuthenticated) {
-        if (uiState.isAuthenticated) {
-            onLoginSuccess()
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collect { event ->
+            when (event) {
+                is AuthUiEvent.AuthSuccess -> onLoginSuccess()
+            }
         }
     }
 
