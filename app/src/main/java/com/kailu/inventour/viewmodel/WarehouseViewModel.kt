@@ -8,12 +8,14 @@ import com.kailu.inventour.model.WarehouseStat
 import com.kailu.inventour.model.WarehouseUiState
 import com.kailu.inventour.repository.InventoryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+sealed class WarehouseUiEvent {
+    object NavigateToLogin : WarehouseUiEvent()
+    object NavigateToRegister : WarehouseUiEvent()
+}
 
 @HiltViewModel
 class WarehouseViewModel @Inject constructor(
@@ -22,6 +24,9 @@ class WarehouseViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(WarehouseUiState())
     val uiState: StateFlow<WarehouseUiState> = _uiState.asStateFlow()
+
+    private val _uiEvent = MutableSharedFlow<WarehouseUiEvent>()
+    val uiEvent = _uiEvent.asSharedFlow()
 
     init {
         loadWarehouseData()
@@ -86,6 +91,18 @@ class WarehouseViewModel @Inject constructor(
     private fun calculateUsedPercent(products: List<Product>): Int {
                 val capacity = 100
         return ((products.size.toFloat() / capacity) * 100).toInt().coerceAtMost(100)
+    }
+
+    fun onLoginClicked() {
+        viewModelScope.launch {
+            _uiEvent.emit(WarehouseUiEvent.NavigateToLogin)
+        }
+    }
+
+    fun onRegisterClicked() {
+        viewModelScope.launch {
+            _uiEvent.emit(WarehouseUiEvent.NavigateToRegister)
+        }
     }
 
     fun refresh() = loadWarehouseData()
