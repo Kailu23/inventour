@@ -41,6 +41,16 @@ fun AddProductScreen(
     var selectedStatus by remember { mutableStateOf("HALF") }
     val statusOptions = listOf("FULL", "HALF", "EXPIRED")
 
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let { viewModel.scanBarcodeFromImage(context, it) }
+    }
+
+    LaunchedEffect(uiState.lastScannedCode) {
+        uiState.lastScannedCode?.let { code = it }
+    }
+
     LaunchedEffect(Unit) {
         viewModel.uiEvent.collect { event ->
             when (event) {
@@ -139,6 +149,10 @@ fun AddProductScreen(
                     modifier = Modifier.weight(1f),
                     singleLine = true
                 )
+                Spacer(Modifier.width(8.dp))
+                IconButton(onClick = { launcher.launch("image/*") }) {
+                    Icon(Icons.Default.PhotoLibrary, contentDescription = "Učitaj iz galerije")
+                }
             }
 
             Spacer(Modifier.height(32.dp))

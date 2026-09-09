@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import android.content.Context
 import android.net.Uri
+import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 import com.kailu.inventour.model.Product
 import com.kailu.inventour.repository.AuthRepository
@@ -120,5 +121,24 @@ class InventoryViewModel @Inject constructor(
 
     fun clearLastScannedCode() {
         _uiState.update { it.copy(lastScannedCode = null) }
+    }
+
+    fun scanBarcodeFromImage(context: Context, uri: Uri) {
+        viewModelScope.launch {
+            try {
+                val image = InputImage.fromFilePath(context, uri)
+                val scanner = BarcodeScanning.getClient()
+                scanner.process(image)
+                    .addOnSuccessListener { barcodes ->
+                        if (barcodes.isNotEmpty()) {
+                            barcodes[0].rawValue?.let { code ->
+                                onCodeScanned(code)
+                            }
+                        }
+                    }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = "Failed to process image: ${e.message}") }
+            }
+        }
     }
 }
