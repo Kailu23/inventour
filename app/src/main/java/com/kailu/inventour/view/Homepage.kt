@@ -7,6 +7,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -19,6 +20,7 @@ import com.kailu.inventour.ui.theme.components.DashboardCard
 import com.kailu.inventour.ui.theme.components.HeroSection
 import com.kailu.inventour.ui.theme.components.WarehouseFooter
 import com.kailu.inventour.ui.theme.components.WarehouseTopBar
+import com.kailu.inventour.viewmodel.WarehouseUiEvent
 import com.kailu.inventour.viewmodel.WarehouseViewModel
 
 @Composable
@@ -28,6 +30,15 @@ fun LandingScreen(
     viewModel: WarehouseViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collect { event ->
+            when (event) {
+                is WarehouseUiEvent.NavigateToLogin -> onNavigateToLogin()
+                is WarehouseUiEvent.NavigateToRegister -> onNavigateToRegister()
+            }
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -42,11 +53,9 @@ fun LandingScreen(
                 stats = uiState.stats,
                 onLoginClick = {
                     viewModel.onLoginClicked()
-                    onNavigateToLogin()
                 },
                 onRegisterClick = {
                     viewModel.onRegisterClicked()
-                    onNavigateToRegister()
                 }
             )
         }
