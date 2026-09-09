@@ -11,12 +11,15 @@ import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 
+sealed class InventoryUiEvent {
+    object ProductAdded : InventoryUiEvent()
+}
+
 data class InventoryUiState(
     val products: List<Product> = emptyList(),
     val filteredProducts: List<Product> = emptyList(),
     val searchQuery: String = "",
     val isLoading: Boolean = false,
-    val isProductAdded: Boolean = false,
     val error: String? = null,
     val lastScannedCode: String? = null
 )
@@ -29,6 +32,9 @@ class InventoryViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(InventoryUiState())
     val uiState: StateFlow<InventoryUiState> = _uiState.asStateFlow()
+
+    private val _uiEvent = MutableSharedFlow<InventoryUiEvent>()
+    val uiEvent = _uiEvent.asSharedFlow()
 
     init {
         loadProducts()
@@ -89,15 +95,12 @@ class InventoryViewModel @Inject constructor(
             )
             val result = inventoryRepository.addProduct(newProduct)
             result.onSuccess {
-                _uiState.update { it.copy(isLoading = false, isProductAdded = true, error = null) }
+                _uiState.update { it.copy(isLoading = false, error = null) }
+                _uiEvent.emit(InventoryUiEvent.ProductAdded)
             }.onFailure { e ->
-                _uiState.update { it.copy(isLoading = false, isProductAdded = false, error = e.message) }
+                _uiState.update { it.copy(isLoading = false, error = e.message) }
             }
         }
-    }
-
-    fun clearSuccessState() {
-        _uiState.update { it.copy(isProductAdded = false) }
     }
 
     fun onCodeScanned(code: String) {
