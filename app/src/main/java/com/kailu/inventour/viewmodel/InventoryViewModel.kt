@@ -2,6 +2,9 @@ package com.kailu.inventour.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.content.Context
+import android.net.Uri
+import com.google.mlkit.vision.common.InputImage
 import com.kailu.inventour.model.Product
 import com.kailu.inventour.repository.AuthRepository
 import com.kailu.inventour.repository.InventoryRepository
@@ -80,7 +83,14 @@ class InventoryViewModel @Inject constructor(
         }
     }
 
-    fun addProduct(name: String, description: String, location: String, barcode: String? = null, qrCode: String? = null) {
+    fun addProduct(
+        name: String,
+        description: String,
+        location: String,
+        status: String,
+        barcode: String? = null,
+        qrCode: String? = null
+    ) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val currentUserId = authRepository.currentUser?.uid ?: ""
@@ -90,6 +100,7 @@ class InventoryViewModel @Inject constructor(
                 name = name,
                 description = description,
                 location = location,
+                status = status,
                 barcode = barcode,
                 qrCode = qrCode
             )
