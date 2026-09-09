@@ -13,6 +13,7 @@ import com.kailu.inventour.ui.theme.BackgroundGreen
 import com.kailu.inventour.ui.theme.TextPrimary
 import com.kailu.inventour.ui.theme.components.LoginButton
 import com.kailu.inventour.ui.theme.components.WarehouseTopBar
+import com.kailu.inventour.viewmodel.InventoryUiEvent
 import com.kailu.inventour.viewmodel.InventoryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -28,10 +29,11 @@ fun AddProductScreen(
     var location by remember { mutableStateOf("") }
     var code by remember { mutableStateOf(uiState.lastScannedCode ?: "") }
 
-    LaunchedEffect(uiState.isProductAdded) {
-        if (uiState.isProductAdded) {
-            viewModel.clearSuccessState()
-            onProductAdded()
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collect { event ->
+            when (event) {
+                is InventoryUiEvent.ProductAdded -> onProductAdded()
+            }
         }
     }
 
