@@ -26,6 +26,7 @@ import com.kailu.inventour.viewmodel.InventoryViewModel
 @Composable
 fun AddProductScreen(
     productId: String? = null,
+    scannedCode: String? = null,
     onProductAdded: () -> Unit,
     onBack: () -> Unit,
     viewModel: InventoryViewModel = hiltViewModel()
@@ -38,7 +39,7 @@ fun AddProductScreen(
     var name by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
-    var code by remember { mutableStateOf(uiState.lastScannedCode ?: "") }
+    var code by remember { mutableStateOf("") }
 
     var statusExpanded by remember { mutableStateOf(false) }
     var selectedStatus by remember { mutableStateOf("HALF") }
@@ -46,13 +47,16 @@ fun AddProductScreen(
 
     var hasInitialized by remember { mutableStateOf(false) }
 
-    LaunchedEffect(initialProduct) {
+    LaunchedEffect(initialProduct, scannedCode) {
         if (initialProduct != null && !hasInitialized) {
             name = initialProduct.name
             description = initialProduct.description
             location = initialProduct.location
             code = initialProduct.barcode ?: initialProduct.qrCode ?: ""
             selectedStatus = initialProduct.status
+            hasInitialized = true
+        } else if (scannedCode != null && !hasInitialized) {
+            code = scannedCode
             hasInitialized = true
         }
     }
