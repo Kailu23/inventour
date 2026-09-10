@@ -25,12 +25,15 @@ import com.kailu.inventour.viewmodel.InventoryViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddProductScreen(
+    productId: String? = null,
     onProductAdded: () -> Unit,
     onBack: () -> Unit,
     viewModel: InventoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+
+    val initialProduct = uiState.products.find { it.id == productId }
 
     var name by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
@@ -40,6 +43,19 @@ fun AddProductScreen(
     var statusExpanded by remember { mutableStateOf(false) }
     var selectedStatus by remember { mutableStateOf("HALF") }
     val statusOptions = listOf("FULL", "HALF", "EXPIRED")
+
+    var hasInitialized by remember { mutableStateOf(false) }
+
+    LaunchedEffect(initialProduct) {
+        if (initialProduct != null && !hasInitialized) {
+            name = initialProduct.name
+            description = initialProduct.description
+            location = initialProduct.location
+            code = initialProduct.barcode ?: initialProduct.qrCode ?: ""
+            selectedStatus = initialProduct.status
+            hasInitialized = true
+        }
+    }
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -55,6 +71,7 @@ fun AddProductScreen(
         viewModel.uiEvent.collect { event ->
             when (event) {
                 is InventoryUiEvent.ProductAdded -> onProductAdded()
+                else -> {}
             }
         }
     }
@@ -73,7 +90,7 @@ fun AddProductScreen(
             Spacer(Modifier.height(24.dp))
 
             Text(
-                text = "Dodaj proizvod",
+                text = if (productId == null) "Dodaj proizvod" else "Uredi proizvod",
                 style = MaterialTheme.typography.displaySmall,
                 color = TextPrimary
             )
@@ -167,7 +184,15 @@ fun AddProductScreen(
 
             LoginButton(
                 onClick = {
-                    viewModel.addProduct(name, description, location, selectedStatus, code, code)
+                    viewModel.saveProduct(
+                        id = productId,
+                        name = name,
+                        description = description,
+                        location = location,
+                        status = selectedStatus,
+                        barcode = code,
+                        qrCode = code
+                    )
                 },
                 modifier = Modifier.fillMaxWidth()
             )
