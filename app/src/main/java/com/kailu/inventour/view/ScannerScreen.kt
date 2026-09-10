@@ -1,7 +1,12 @@
 package com.kailu.inventour.view
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.util.Log
 import android.view.ViewGroup
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
@@ -36,58 +41,86 @@ fun ScannerScreen(
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     var hasScanned by remember { mutableStateOf(false) }
 
+    var hasCameraPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { granted ->
+            hasCameraPermission = granted
+            if (!granted) {
+                Toast.makeText(context, "Kamera je potrebna za skeniranje", Toast.LENGTH_LONG).show()
+                onBack()
+            }
+        }
+    )
+
+    LaunchedEffect(Unit) {
+        if (!hasCameraPermission) {
+            launcher.launch(Manifest.permission.CAMERA)
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
-        AndroidView(
-            factory = { context ->
-                val previewView = PreviewView(context).apply {
-                    layoutParams = ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                    )
-                }
+        if (hasCameraPermission) {
+            AndroidView(
+                factory = { context ->
+                    val previewView = PreviewView(context).apply {
+                        layoutParams = ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                        )
+                    }
 
-                val preview = Preview.Builder().build().also {
-                    it.surfaceProvider = previewView.surfaceProvider
-                }
+                    val preview = Preview.Builder().build().also {
+                        it.surfaceProvider = previewView.surfaceProvider
+                    }
 
-                val selector = CameraSelector.DEFAULT_BACK_CAMERA
+                    val selector = CameraSelector.DEFAULT_BACK_CAMERA
 
-                val imageAnalysis = ImageAnalysis.Builder()
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                    .build()
+                    val imageAnalysis = ImageAnalysis.Builder()
+                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                        .build()
 
-                imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
-                    processImageProxy(imageProxy) { code ->
-                        if (!hasScanned) {
-                            Log.d("ScannerScreen", "Barcode found: $code")
-                            hasScanned = true
-                            viewModel.onCodeScanned(code)
-                            onCodeScanned(code)
+                    imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
+                        processImageProxy(imageProxy) { code ->
+                            if (!hasScanned) {
+                                Log.d("ScannerScreen", "Barcode found: $code")
+                                hasScanned = true
+                                viewModel.onCodeScanned(code)
+                                onCodeScanned(code)
+                            }
                         }
                     }
-                }
 
-                try {
-                    cameraProviderFuture.get().bindToLifecycle(
-                        lifecycleOwner,
-                        selector,
-                        preview,
-                        imageAnalysis
-                    )
-                } catch (e: Exception) {
-                    Log.e("ScannerScreen", "Camera binding failed", e)
-                }
+                    try {
+                        cameraProviderFuture.get().bindToLifecycle(
+                            lifecycleOwner,
+                            selector,
+                            preview,
+                            imageAnalysis
+                        )
+                    } catch (e: Exception) {
+                        Log.e("ScannerScreen", "Camera binding failed", e)
+                    }
 
-                previewView
-            },
-            modifier = Modifier.fillMaxSize()
-        )
+                    previewView
+                },
+                modifier = Modifier.fillMaxSize()
+            )
 
-        Text(
-            text = "Skenirajte QR ili Barkod",
-            modifier = Modifier.align(Alignment.BottomCenter),
-            color = androidx.compose.ui.graphics.Color.White
-        )
+            Text(
+                text = "Skenirajte QR ili Barkod",
+                modifier = Modifier.align(Alignment.BottomCenter),
+                color = androidx.compose.ui.graphics.Color.White
+            )
+        }
     }
 }
 
