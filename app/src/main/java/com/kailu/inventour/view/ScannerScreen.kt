@@ -59,6 +59,7 @@ fun ScannerScreen(
                 imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
                     processImageProxy(imageProxy) { code ->
                         if (!hasScanned) {
+                            Log.d("ScannerScreen", "Barcode found: $code")
                             hasScanned = true
                             viewModel.onCodeScanned(code)
                             onCodeScanned(code)

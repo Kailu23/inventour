@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 import com.kailu.inventour.model.Product
@@ -135,10 +136,12 @@ class InventoryViewModel @Inject constructor(
     }
 
     fun onCodeScanned(code: String) {
+        Log.d("InventoryViewModel", "Code scanned: $code")
         _uiState.update { it.copy(lastScannedCode = code) }
     }
 
     fun clearLastScannedCode() {
+        Log.d("InventoryViewModel", "Clearing last scanned code")
         _uiState.update { it.copy(lastScannedCode = null) }
     }
 
