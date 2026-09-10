@@ -2,9 +2,11 @@ package com.kailu.inventour.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.kailu.inventour.view.LandingScreen
 import com.kailu.inventour.view.LoginScreen
 import com.kailu.inventour.view.RegisterScreen
@@ -22,7 +24,7 @@ object Routes {
     const val REGISTER   = "register"
     const val DASHBOARD  = "dashboard"
     const val SCANNER    = "scanner"
-    const val ADD_PRODUCT = "add_product"
+    const val ADD_PRODUCT = "add_product?productId={productId}"
     const val SETTINGS   = "settings"
     const val OVERVIEW   = "overview"
 }
@@ -68,9 +70,12 @@ fun WarehouseNavGraph(
         composable(Routes.DASHBOARD) {
             DashboardScreen(
                 onNavigateToScanner = { navController.navigate(Routes.SCANNER) },
-                onNavigateToAddProduct = { navController.navigate(Routes.ADD_PRODUCT) },
+                onNavigateToAddProduct = { navController.navigate("add_product") },
                 onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
-                onNavigateToOverview = { navController.navigate(Routes.OVERVIEW) }
+                onNavigateToOverview = { navController.navigate(Routes.OVERVIEW) },
+                onProductClick = { productId ->
+                    navController.navigate("add_product?productId=$productId")
+                }
             )
         }
 
@@ -103,9 +108,20 @@ fun WarehouseNavGraph(
             )
         }
 
-        composable(Routes.ADD_PRODUCT) {
+        composable(
+            route = Routes.ADD_PRODUCT,
+            arguments = listOf(navArgument("productId") {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            })
+        ) { backStackEntry ->
+            val productId = backStackEntry.arguments?.getString("productId")
             AddProductScreen(
-                onProductAdded = { navController.popBackStack(Routes.DASHBOARD, false) },
+                productId = productId,
+                onProductAdded = {
+                    navController.popBackStack(Routes.DASHBOARD, false)
+                },
                 onBack = { navController.popBackStack() }
             )
         }
