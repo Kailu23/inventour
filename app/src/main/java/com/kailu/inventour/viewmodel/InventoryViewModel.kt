@@ -17,6 +17,7 @@ import javax.inject.Inject
 
 sealed class InventoryUiEvent {
     object ProductAdded : InventoryUiEvent()
+    object ProductDeleted : InventoryUiEvent()
 }
 
 data class InventoryUiState(
@@ -84,7 +85,8 @@ class InventoryViewModel @Inject constructor(
         }
     }
 
-    fun addProduct(
+    fun saveProduct(
+        id: String? = null,
         name: String,
         description: String,
         location: String,
@@ -95,8 +97,8 @@ class InventoryViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val currentUserId = authRepository.currentUser?.uid ?: ""
-            val newProduct = Product(
-                id = UUID.randomUUID().toString(),
+            val product = Product(
+                id = id ?: UUID.randomUUID().toString(),
                 userId = currentUserId,
                 name = name,
                 description = description,
@@ -105,7 +107,7 @@ class InventoryViewModel @Inject constructor(
                 barcode = barcode,
                 qrCode = qrCode
             )
-            val result = inventoryRepository.addProduct(newProduct)
+            val result = inventoryRepository.addProduct(product)
             result.onSuccess {
                 _uiState.update { it.copy(isLoading = false, error = null) }
                 _uiEvent.emit(InventoryUiEvent.ProductAdded)
@@ -113,6 +115,23 @@ class InventoryViewModel @Inject constructor(
                 _uiState.update { it.copy(isLoading = false, error = e.message) }
             }
         }
+    }
+
+    fun deleteProduct(product: Product) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            val result = inventoryRepository.deleteProduct(product)
+            result.onSuccess {
+                _uiState.update { it.copy(isLoading = false, error = null) }
+                _uiEvent.emit(InventoryUiEvent.ProductDeleted)
+            }.onFailure { e ->
+                _uiState.update { it.copy(isLoading = false, error = e.message) }
+            }
+        }
+    }
+
+    fun getProductById(id: String?): Product? {
+        return _uiState.value.products.find { it.id == id }
     }
 
     fun onCodeScanned(code: String) {
