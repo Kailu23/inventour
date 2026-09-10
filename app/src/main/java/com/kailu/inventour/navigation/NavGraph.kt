@@ -5,6 +5,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.kailu.inventour.view.LandingScreen
@@ -16,6 +17,8 @@ import com.kailu.inventour.view.AddProductScreen
 import com.kailu.inventour.view.SettingsScreen
 import com.kailu.inventour.view.OverviewScreen
 import com.google.firebase.auth.FirebaseAuth
+import androidx.compose.runtime.remember
+import androidx.hilt.navigation.compose.hiltViewModel
 
 
 object Routes {
@@ -24,15 +27,16 @@ object Routes {
     const val REGISTER   = "register"
     const val DASHBOARD  = "dashboard"
     const val SCANNER    = "scanner"
-    const val ADD_PRODUCT = "add_product?productId={productId}"
+    const val ADD_PRODUCT = "add_product?productId={productId}&code={code}"
     const val SETTINGS   = "settings"
     const val OVERVIEW   = "overview"
+    const val INVENTORY  = "inventory"
 }
 
 @Composable
 fun WarehouseNavGraph(
     navController: NavHostController = rememberNavController(),
-    startDestination: String = if (FirebaseAuth.getInstance().currentUser != null) Routes.DASHBOARD else Routes.LANDING
+    startDestination: String = if (FirebaseAuth.getInstance().currentUser != null) Routes.INVENTORY else Routes.LANDING
 ) {
     NavHost(navController = navController, startDestination = startDestination) {
 
@@ -46,7 +50,7 @@ fun WarehouseNavGraph(
         composable(Routes.LOGIN) {
             LoginScreen(
                 onLoginSuccess = {
-                    navController.navigate(Routes.DASHBOARD) {
+                    navController.navigate(Routes.INVENTORY) {
                         popUpTo(Routes.LANDING) { inclusive = true }
                     }
                 },
@@ -58,7 +62,7 @@ fun WarehouseNavGraph(
         composable(Routes.REGISTER) {
             RegisterScreen(
                 onRegisterSuccess = {
-                    navController.navigate(Routes.DASHBOARD) {
+                    navController.navigate(Routes.INVENTORY) {
                         popUpTo(Routes.LANDING) { inclusive = true }
                     }
                 },
@@ -67,16 +71,68 @@ fun WarehouseNavGraph(
             )
         }
 
-        composable(Routes.DASHBOARD) {
-            DashboardScreen(
-                onNavigateToScanner = { navController.navigate(Routes.SCANNER) },
-                onNavigateToAddProduct = { navController.navigate("add_product") },
-                onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
-                onNavigateToOverview = { navController.navigate(Routes.OVERVIEW) },
-                onProductClick = { productId ->
-                    navController.navigate("add_product?productId=$productId")
-                }
-            )
+        navigation(startDestination = Routes.DASHBOARD, route = Routes.INVENTORY) {
+            composable(Routes.DASHBOARD) { backStackEntry ->
+                val viewModel: com.kailu.inventour.viewmodel.InventoryViewModel = hiltViewModel(
+                    remember(backStackEntry) { navController.getBackStackEntry(Routes.INVENTORY) }
+                )
+                DashboardScreen(
+                    onNavigateToScanner = { navController.navigate(Routes.SCANNER) },
+                    onNavigateToAddProduct = { navController.navigate("add_product") },
+                    onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
+                    onNavigateToOverview = { navController.navigate(Routes.OVERVIEW) },
+                    onProductClick = { productId ->
+                        navController.navigate("add_product?productId=$productId")
+                    },
+                    viewModel = viewModel
+                )
+            }
+
+            composable(Routes.SCANNER) { backStackEntry ->
+                val viewModel: com.kailu.inventour.viewmodel.InventoryViewModel = hiltViewModel(
+                    remember(backStackEntry) { navController.getBackStackEntry(Routes.INVENTORY) }
+                )
+                ScannerScreen(
+                    onCodeScanned = { code ->
+                        navController.navigate("add_product?code=$code") {
+                            launchSingleTop = true
+                        }
+                    },
+                    onBack = { navController.popBackStack() },
+                    viewModel = viewModel
+                )
+            }
+
+            composable(
+                route = Routes.ADD_PRODUCT,
+                arguments = listOf(
+                    navArgument("productId") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    navArgument("code") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
+                )
+            ) { backStackEntry ->
+                val viewModel: com.kailu.inventour.viewmodel.InventoryViewModel = hiltViewModel(
+                    remember(backStackEntry) { navController.getBackStackEntry(Routes.INVENTORY) }
+                )
+                val productId = backStackEntry.arguments?.getString("productId")
+                val code = backStackEntry.arguments?.getString("code")
+                AddProductScreen(
+                    productId = productId,
+                    scannedCode = code,
+                    onProductAdded = {
+                        navController.popBackStack(Routes.DASHBOARD, false)
+                    },
+                    onBack = { navController.popBackStack() },
+                    viewModel = viewModel
+                )
+            }
         }
 
         composable(Routes.OVERVIEW) {
@@ -92,35 +148,6 @@ fun WarehouseNavGraph(
                     navController.navigate(Routes.LANDING) {
                         popUpTo(0) { inclusive = true }
                     }
-                },
-                onBack = { navController.popBackStack() }
-            )
-        }
-
-        composable(Routes.SCANNER) {
-            ScannerScreen(
-                onCodeScanned = { code ->
-                    navController.navigate(Routes.ADD_PRODUCT) {
-                        launchSingleTop = true
-                    }
-                },
-                onBack = { navController.popBackStack() }
-            )
-        }
-
-        composable(
-            route = Routes.ADD_PRODUCT,
-            arguments = listOf(navArgument("productId") {
-                type = NavType.StringType
-                nullable = true
-                defaultValue = null
-            })
-        ) { backStackEntry ->
-            val productId = backStackEntry.arguments?.getString("productId")
-            AddProductScreen(
-                productId = productId,
-                onProductAdded = {
-                    navController.popBackStack(Routes.DASHBOARD, false)
                 },
                 onBack = { navController.popBackStack() }
             )
