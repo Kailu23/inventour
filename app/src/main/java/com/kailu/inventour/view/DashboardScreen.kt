@@ -1,16 +1,16 @@
 package com.kailu.inventour.view
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,11 +34,46 @@ fun DashboardScreen(
     onNavigateToAddProduct: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToOverview: () -> Unit,
+    onProductClick: (String) -> Unit,
     viewModel: InventoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+
+    var productToDelete by remember { mutableStateOf<Product?>(null) }
+
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collect { event ->
+            when (event) {
+                is com.kailu.inventour.viewmodel.InventoryUiEvent.ProductDeleted -> {
+                    // Handled by state collection
+                }
+                else -> {}
+            }
+        }
+    }
+
+    if (productToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { productToDelete = null },
+            title = { Text("Brisanje proizvoda") },
+            text = { Text("Jeste li sigurni da želite obrisati proizvod ${productToDelete?.name}?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    productToDelete?.let { viewModel.deleteProduct(it) }
+                    productToDelete = null
+                }) {
+                    Text("Obriši", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { productToDelete = null }) {
+                    Text("Odustani")
+                }
+            }
+        )
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -145,7 +180,11 @@ fun DashboardScreen(
                         contentPadding = PaddingValues(bottom = 80.dp)
                     ) {
                         items(uiState.filteredProducts) { product ->
-                            ProductItem(product)
+                            ProductItem(
+                                product = product,
+                                onClick = { onProductClick(product.id) },
+                                onDeleteClick = { productToDelete = product }
+                            )
                         }
                     }
                 }
@@ -155,9 +194,15 @@ fun DashboardScreen(
 }
 
 @Composable
-fun ProductItem(product: Product) {
+fun ProductItem(
+    product: Product,
+    onClick: () -> Unit,
+    onDeleteClick: () -> Unit
+) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = MaterialTheme.shapes.medium,
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -172,18 +217,31 @@ fun ProductItem(product: Product) {
                     text = product.name,
                     style = MaterialTheme.typography.titleLarge,
                     color = TextPrimary,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
                 )
-                Surface(
-                    color = SurfaceDark,
-                    shape = MaterialTheme.shapes.small
-                ) {
-                    Text(
-                        text = product.location,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        color = TextOnDark,
-                        fontSize = 12.sp
-                    )
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(
+                        color = SurfaceDark,
+                        shape = MaterialTheme.shapes.small
+                    ) {
+                        Text(
+                            text = product.location,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            color = TextOnDark,
+                            fontSize = 12.sp
+                        )
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    IconButton(onClick = onDeleteClick, modifier = Modifier.size(24.dp)) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = "Obriši",
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
             Spacer(Modifier.height(4.dp))
