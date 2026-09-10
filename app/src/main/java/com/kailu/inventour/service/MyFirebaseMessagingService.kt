@@ -20,9 +20,11 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
 
-        remoteMessage.notification?.let {
-            showNotification(it.title ?: "Inventour", it.body ?: "")
-        }
+        val title = remoteMessage.notification?.title ?: remoteMessage.data["title"] ?: "Inventour"
+        val body = remoteMessage.notification?.body ?: remoteMessage.data["body"] ?: ""
+        val type = remoteMessage.data["type"]
+
+        showNotification(title, body, type)
     }
 
     override fun onNewToken(token: String) {
@@ -45,9 +47,10 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             }
     }
 
-    private fun showNotification(title: String, message: String) {
+    private fun showNotification(title: String, body: String, type: String?) {
         val intent = Intent(this, MainActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            putExtra("notification_type", type)
         }
 
         val pendingIntent = PendingIntent.getActivity(
@@ -55,26 +58,24 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val channelId = "inventour_notifications"
+        val channelId = if (type == "OCCUPANCY_ALERT") "inventour_alerts" else "inventour_notifications"
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_launcher_foreground) 
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(title)
-            .setContentText(message)
+            .setContentText(body)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setPriority(if (type == "OCCUPANCY_ALERT") NotificationCompat.PRIORITY_MAX else NotificationCompat.PRIORITY_HIGH)
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId,
-                "Inventour Notifications",
-                NotificationManager.IMPORTANCE_HIGH
-            )
+            val name = if (type == "OCCUPANCY_ALERT") "Alerts" else "Notifications"
+            val importance = if (type == "OCCUPANCY_ALERT") NotificationManager.IMPORTANCE_HIGH else NotificationManager.IMPORTANCE_DEFAULT
+            val channel = NotificationChannel(channelId, name, importance)
             notificationManager.createNotificationChannel(channel)
         }
 
-        notificationManager.notify(0, notificationBuilder.build())
+        notificationManager.notify(System.currentTimeMillis().toInt(), notificationBuilder.build())
     }
 }
