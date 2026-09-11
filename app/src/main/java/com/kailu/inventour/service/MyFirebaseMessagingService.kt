@@ -58,24 +58,29 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent,
-            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val channelId = if (type == "OCCUPANCY_ALERT") "inventour_alerts" else "inventour_notifications"
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(android.R.drawable.ic_dialog_info) // Safe system icon
             .setContentTitle(title)
             .setContentText(body)
             .setAutoCancel(true)
+            .setDefaults(android.app.Notification.DEFAULT_ALL)
             .setContentIntent(pendingIntent)
-            .setPriority(if (type == "OCCUPANCY_ALERT") NotificationCompat.PRIORITY_MAX else NotificationCompat.PRIORITY_HIGH)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = if (type == "OCCUPANCY_ALERT") "Alerts" else "Notifications"
-            val importance = if (type == "OCCUPANCY_ALERT") NotificationManager.IMPORTANCE_HIGH else NotificationManager.IMPORTANCE_DEFAULT
-            val channel = NotificationChannel(channelId, name, importance)
+            val importance = NotificationManager.IMPORTANCE_HIGH
+            val channel = NotificationChannel(channelId, name, importance).apply {
+                description = "Warehouse updates and alerts"
+                enableVibration(true)
+                setShowBadge(true)
+            }
             notificationManager.createNotificationChannel(channel)
         }
 
