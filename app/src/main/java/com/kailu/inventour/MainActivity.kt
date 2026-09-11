@@ -24,8 +24,10 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-                    } else {
-                    }
+            Toast.makeText(this, "Obavijesti su uključene!", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Obavijesti su isključene.", Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
