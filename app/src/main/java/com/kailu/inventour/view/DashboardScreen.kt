@@ -188,6 +188,47 @@ fun DashboardScreen(
                             contentPadding = PaddingValues(bottom = 80.dp)
                         ) {
                             items(uiState.filteredProducts, key = { it.id }) { product ->
+                                val dismissState = rememberSwipeToDismissBoxState(
+                                    confirmValueChange = { value ->
+                                        if (value == SwipeToDismissBoxValue.EndToStart) {
+                                            productToDelete = product
+                                            false // Don't dismiss until confirmed
+                                        } else {
+                                            false
+                                        }
+                                    }
+                                )
+
+                                SwipeToDismissBox(
+                                    state = dismissState,
+                                    backgroundContent = {
+                                        val color = when (dismissState.dismissDirection) {
+                                            SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
+                                            else -> Color.Transparent
+                                        }
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .background(color, MaterialTheme.shapes.medium),
+                                            contentAlignment = Alignment.CenterEnd
+                                        ) {
+                                            if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
+                                                Icon(
+                                                    Icons.Default.Delete,
+                                                    contentDescription = "Delete",
+                                                    modifier = Modifier.padding(end = 16.dp),
+                                                    tint = MaterialTheme.colorScheme.onErrorContainer
+                                                )
+                                            }
+                                        }
+                                    },
+                                    enableDismissFromStartToEnd = false
+                                ) {
+                                    ProductItem(
+                                        product = product,
+                                        onClick = { onProductClick(product.id) }
+                                    )
+                                }
                             }
                         }
                     }
