@@ -33,7 +33,6 @@ class AuthViewModel @Inject constructor(
     val uiEvent = _uiEvent.asSharedFlow()
 
     init {
-                authRepository.currentUser?.let { subscribeToUserTopic(it.uid) }
     }
 
     fun login(email: String, password: String) {
@@ -41,7 +40,6 @@ class AuthViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true, error = null) }
             val result = authRepository.login(email, password)
             result.onSuccess { user ->
-                subscribeToUserTopic(user.uid)
                 _uiState.update { it.copy(user = user, isLoading = false, isAuthenticated = true) }
                 _uiEvent.emit(AuthUiEvent.AuthSuccess)
             }.onFailure { e ->
@@ -55,7 +53,6 @@ class AuthViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true, error = null) }
             val result = authRepository.register(name, email, password)
             result.onSuccess { user ->
-                subscribeToUserTopic(user.uid)
                 _uiState.update { it.copy(user = user, isLoading = false, isAuthenticated = true) }
                 _uiEvent.emit(AuthUiEvent.AuthSuccess)
             }.onFailure { e ->
@@ -65,17 +62,8 @@ class AuthViewModel @Inject constructor(
     }
 
     fun logout() {
-        authRepository.currentUser?.let { unsubscribeFromUserTopic(it.uid) }
         authRepository.logout()
         _uiState.update { it.copy(user = null, isAuthenticated = false) }
-    }
-
-    private fun subscribeToUserTopic(uid: String) {
-        FirebaseMessaging.getInstance().subscribeToTopic("user_$uid")
-    }
-
-    private fun unsubscribeFromUserTopic(uid: String) {
-        FirebaseMessaging.getInstance().unsubscribeFromTopic("user_$uid")
     }
 
     fun clearError() {

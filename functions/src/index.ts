@@ -13,7 +13,10 @@ setGlobalOptions({maxInstances: 10});
  */
 export const handleProductChange =
     onDocumentWritten("products/{productId}", async (event) => {
-      const productId = event.params.productId;
+      console.log(
+        "handleProductChange triggered for productId:",
+        event.params.productId);
+
       const beforeData = event.data?.before.data();
       const afterData = event.data?.after.data();
 
@@ -35,9 +38,16 @@ export const handleProductChange =
         userId = beforeData.userId;
       }
 
-      if (!userId) return;
+      console.log(
+        `Action: ${action}, Product: ${productName}, User: ${userId}`
+      );
 
-      const changeMessage = {
+      if (!userId) {
+        console.log("No userId found, skipping notification.");
+        return;
+      }
+
+      const changeMessage: admin.messaging.Message = {
         notification: {
           title: action === "ADD" ?
             "Novi proizvod" :
@@ -47,43 +57,60 @@ export const handleProductChange =
             (action === "UPDATE" ? "ažuriran" : "uklonjen")}.`,
         },
         data: {
+          title: action === "ADD" ?
+            "Novi proizvod" :
+            (action === "UPDATE" ? "Proizvod ažuriran" : "Proizvod obrisan"),
+          body: `Proizvod "${productName}" je uspješno ${action === "ADD" ?
+            "dodan" :
+            (action === "UPDATE" ? "ažuriran" : "uklonjen")}.`,
           type: "PRODUCT_CHANGE",
           action: action,
-          productId: productId,
+          productId: event.params.productId,
         },
-        topic: `user_${userId}`,
+        topic: "inventory_updates",
       };
 
       try {
-        await admin.messaging().send(changeMessage);
+        const response = await admin.messaging().send(changeMessage);
+        console.log("Change notification sent successfully:", response);
       } catch (error) {
         console.error("Error sending change notification:", error);
       }
 
+      // Occupancy Logic
       const capacity = 100;
-      const snapshot =
-          await admin.firestore().collection("products").count().get();
-      const count = snapshot.data().count;
-      const occupancyPercent = (count / capacity) * 100;
+      try {
+        const snapshot =
+            await admin.firestore().collection("products").count().get();
+        const count = snapshot.data().count;
+        const occupancyPercent = Math.floor((count / capacity) * 100);
 
-      const thresholds = [25, 50, 75, 100];
-      if (thresholds.includes(occupancyPercent)) {
-        const occupancyMessage = {
-          notification: {
-            title: "Upozorenje o popunjenosti",
-            body: `Skladište je sada na ${occupancyPercent}% kapaciteta.`,
-          },
-          data: {
-            type: "OCCUPANCY_ALERT",
-            percent: occupancyPercent.toString(),
-          },
-          topic: `user_${userId}`,
-        };
+        console.log(
+          `Current occupancy: ${count}/${capacity} (${occupancyPercent}%)`
+        );
 
-        try {
-          await admin.messaging().send(occupancyMessage);
-        } catch (error) {
-          console.error("Error sending occupancy notification:", error);
+        const thresholds = [25, 50, 75, 100];
+        if (thresholds.includes(occupancyPercent)) {
+          const occupancyMessage: admin.messaging.Message = {
+            notification: {
+              title: "Upozorenje o popunjenosti",
+              body: `Skladište je sada na ${occupancyPercent}% kapaciteta.`,
+            },
+            data: {
+              title: "Upozorenje o popunjenosti",
+              body: `Skladište je sada na ${occupancyPercent}% kapaciteta.`,
+              type: "OCCUPANCY_ALERT",
+              percent: occupancyPercent.toString(),
+            },
+            topic: "inventory_updates",
+          };
+
+          const response = await admin.messaging().send(occupancyMessage);
+          console.log("Occupancy notification sent successfully:", response);
         }
+      } catch (error) {
+        console.error(
+          "Error calculating occupancy or sending notification:",
+          error);
       }
     });
