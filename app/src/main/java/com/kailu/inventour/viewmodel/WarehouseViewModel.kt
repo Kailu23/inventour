@@ -44,7 +44,8 @@ class WarehouseViewModel @Inject constructor(
                     it.copy(
                         locationUsedPercent = "$usedPercent%",
                         stats = stats,
-                        isLoading = false
+                        isLoading = false,
+                        isRefreshing = false
                     )
                 }
             }
@@ -75,7 +76,7 @@ class WarehouseViewModel @Inject constructor(
             ),
             WarehouseStat(
                 label = "Humidity",
-                value = "85%", 
+                value = "85%",
                 icon = "💧",
                 progressColorType = ProgressType.NONE
             ),
@@ -105,5 +106,10 @@ class WarehouseViewModel @Inject constructor(
         }
     }
 
-    fun refresh() = loadWarehouseData()
+    fun refresh() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isRefreshing = true) }
+            inventoryRepository.syncProducts()
+        }
+    }
 }

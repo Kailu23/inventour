@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -141,50 +143,52 @@ fun DashboardScreen(
             },
             containerColor = BackgroundGreen
         ) { padding ->
-            Column(
+            PullToRefreshBox(
+                isRefreshing = uiState.isRefreshing,
+                onRefresh = { viewModel.refresh() },
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .padding(horizontal = 24.dp)
             ) {
-                Text(
-                    text = "Vaše skladište",
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = TextPrimary,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-
-                OutlinedTextField(
-                    value = uiState.searchQuery,
-                    onValueChange = { viewModel.onSearchQueryChanged(it) },
-                    placeholder = { Text("Pretraži proizvode...") },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp),
-                    shape = MaterialTheme.shapes.medium,
-                    singleLine = true
-                )
+                        .fillMaxSize()
+                        .padding(horizontal = 24.dp)
+                ) {
+                    Text(
+                        text = "Vaše skladište",
+                        style = MaterialTheme.typography.headlineLarge,
+                        color = TextPrimary,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
 
-                if (uiState.isLoading) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
-                } else if (uiState.filteredProducts.isEmpty()) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(text = "Nema rezultata za pretragu.", color = TextPrimary)
-                    }
-                } else {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        contentPadding = PaddingValues(bottom = 80.dp)
-                    ) {
-                        items(uiState.filteredProducts) { product ->
-                            ProductItem(
-                                product = product,
-                                onClick = { onProductClick(product.id) },
-                                onDeleteClick = { productToDelete = product }
-                            )
+                    OutlinedTextField(
+                        value = uiState.searchQuery,
+                        onValueChange = { viewModel.onSearchQueryChanged(it) },
+                        placeholder = { Text("Pretraži proizvode...") },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        shape = MaterialTheme.shapes.medium,
+                        singleLine = true
+                    )
+
+                    if (uiState.isLoading) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
+                        }
+                    } else if (uiState.filteredProducts.isEmpty()) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(text = "Nema rezultata za pretragu.", color = TextPrimary)
+                        }
+                    } else {
+                        LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            contentPadding = PaddingValues(bottom = 80.dp)
+                        ) {
+                            items(uiState.filteredProducts, key = { it.id }) { product ->
+                            }
                         }
                     }
                 }
@@ -196,8 +200,7 @@ fun DashboardScreen(
 @Composable
 fun ProductItem(
     product: Product,
-    onClick: () -> Unit,
-    onDeleteClick: () -> Unit
+    onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -221,27 +224,16 @@ fun ProductItem(
                     modifier = Modifier.weight(1f)
                 )
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Surface(
-                        color = SurfaceDark,
-                        shape = MaterialTheme.shapes.small
-                    ) {
-                        Text(
-                            text = product.location,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            color = TextOnDark,
-                            fontSize = 12.sp
-                        )
-                    }
-                    Spacer(Modifier.width(8.dp))
-                    IconButton(onClick = onDeleteClick, modifier = Modifier.size(24.dp)) {
-                        Icon(
-                            Icons.Default.Delete,
-                            contentDescription = "Obriši",
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
+                Surface(
+                    color = SurfaceDark,
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(
+                        text = product.location,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        color = TextOnDark,
+                        fontSize = 12.sp
+                    )
                 }
             }
             Spacer(Modifier.height(4.dp))

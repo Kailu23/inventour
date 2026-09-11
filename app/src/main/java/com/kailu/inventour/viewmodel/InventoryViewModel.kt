@@ -26,6 +26,7 @@ data class InventoryUiState(
     val filteredProducts: List<Product> = emptyList(),
     val searchQuery: String = "",
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
     val error: String? = null,
     val lastScannedCode: String? = null
 )
@@ -83,6 +84,14 @@ class InventoryViewModel @Inject constructor(
     private fun syncWithCloud() {
         viewModelScope.launch {
             inventoryRepository.syncProducts()
+        }
+    }
+
+    fun refresh() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isRefreshing = true) }
+            inventoryRepository.syncProducts()
+            _uiState.update { it.copy(isRefreshing = false) }
         }
     }
 

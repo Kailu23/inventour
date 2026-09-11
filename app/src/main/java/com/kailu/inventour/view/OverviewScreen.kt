@@ -7,6 +7,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -74,33 +75,39 @@ fun OverviewScreen(
                 .fillMaxSize()
                 .background(BackgroundGreen)
         ) {
-            if (uiState.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    WarehouseTopBar(onMenuClick = { scope.launch { drawerState.open() } })
-
-                    Text(
-                        text = "Pregled skladišta",
-                        style = MaterialTheme.typography.headlineLarge,
-                        modifier = Modifier.padding(horizontal = 32.dp, vertical = 16.dp)
-                    )
-
-                    DashboardCard(
-                        locationUsedPercent = uiState.locationUsedPercent,
-                        stats = uiState.stats,
+            PullToRefreshBox(
+                isRefreshing = uiState.isRefreshing,
+                onRefresh = { viewModel.refresh() },
+                modifier = Modifier.fillMaxSize()
+            ) {
+                if (uiState.isLoading && !uiState.isRefreshing) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                } else {
+                    Column(
                         modifier = Modifier
-                            .padding(horizontal = 32.dp)
-                            .fillMaxWidth()
-                    )
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        WarehouseTopBar(onMenuClick = { scope.launch { drawerState.open() } })
 
-                    Spacer(Modifier.height(32.dp))
+                        Text(
+                            text = "Pregled skladišta",
+                            style = MaterialTheme.typography.headlineLarge,
+                            modifier = Modifier.padding(horizontal = 32.dp, vertical = 16.dp)
+                        )
 
-                    WarehouseFooter()
+                        DashboardCard(
+                            locationUsedPercent = uiState.locationUsedPercent,
+                            stats = uiState.stats,
+                            modifier = Modifier
+                                .padding(horizontal = 32.dp)
+                                .fillMaxWidth()
+                        )
+
+                        Spacer(Modifier.height(32.dp))
+
+                        WarehouseFooter()
+                    }
                 }
             }
         }

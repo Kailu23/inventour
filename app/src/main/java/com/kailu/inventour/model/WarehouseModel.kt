@@ -12,8 +12,9 @@ data class WarehouseStat(
 enum class ProgressType { FULL, HALF, EXPIRED, NONE }
 
 data class WarehouseUiState(
-    val locationUsedPercent: String = "79%",
+    val locationUsedPercent: String = "0%",
     val stats: List<WarehouseStat> = emptyList(),
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
     val error: String? = null
 )
