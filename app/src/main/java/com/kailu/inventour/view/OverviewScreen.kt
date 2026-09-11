@@ -83,28 +83,30 @@ fun OverviewScreen(
                 if (uiState.isLoading && !uiState.isRefreshing) {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 } else {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                    ) {
-                        WarehouseTopBar(onMenuClick = { scope.launch { drawerState.open() } })
-
-                        Text(
-                            text = "Pregled skladišta",
-                            style = MaterialTheme.typography.headlineLarge,
-                            modifier = Modifier.padding(horizontal = 32.dp, vertical = 16.dp)
-                        )
-
-                        DashboardCard(
-                            locationUsedPercent = uiState.locationUsedPercent,
-                            stats = uiState.stats,
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Column(
                             modifier = Modifier
-                                .padding(horizontal = 32.dp)
-                                .fillMaxWidth()
-                        )
+                                .weight(1f)
+                                .verticalScroll(rememberScrollState())
+                        ) {
+                            WarehouseTopBar(onMenuClick = { scope.launch { drawerState.open() } })
 
-                        Spacer(Modifier.height(32.dp))
+                            Text(
+                                text = "Pregled skladišta",
+                                style = MaterialTheme.typography.headlineLarge,
+                                modifier = Modifier.padding(horizontal = 32.dp, vertical = 16.dp)
+                            )
+
+                            DashboardCard(
+                                locationUsedPercent = uiState.locationUsedPercent,
+                                stats = uiState.stats,
+                                modifier = Modifier
+                                    .padding(horizontal = 32.dp)
+                                    .fillMaxWidth()
+                            )
+
+                            Spacer(Modifier.height(32.dp))
+                        }
 
                         WarehouseFooter()
                     }

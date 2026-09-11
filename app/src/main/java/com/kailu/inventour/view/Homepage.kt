@@ -70,30 +70,32 @@ private fun LandingContent(
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-    ) {
-        WarehouseTopBar()
-
-        HeroSection(
-            onLoginClick = onLoginClick,
-            onRegisterClick = onRegisterClick,
-            modifier = Modifier.padding(horizontal = 48.dp)
-        )
-
-        Spacer(Modifier.height(32.dp))
-
-        DashboardCard(
-            locationUsedPercent = locationUsedPercent,
-            stats = stats,
+    Column(modifier = Modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
-                .padding(horizontal = 32.dp)
-                .fillMaxWidth()
-        )
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+        ) {
+            WarehouseTopBar()
 
-        Spacer(Modifier.height(24.dp))
+            HeroSection(
+                onLoginClick = onLoginClick,
+                onRegisterClick = onRegisterClick,
+                modifier = Modifier.padding(horizontal = 48.dp)
+            )
+
+            Spacer(Modifier.height(32.dp))
+
+            DashboardCard(
+                locationUsedPercent = locationUsedPercent,
+                stats = stats,
+                modifier = Modifier
+                    .padding(horizontal = 32.dp)
+                    .fillMaxWidth()
+            )
+
+            Spacer(Modifier.height(24.dp))
+        }
 
         WarehouseFooter()
     }
