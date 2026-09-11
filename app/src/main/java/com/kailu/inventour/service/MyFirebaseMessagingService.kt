@@ -19,10 +19,13 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
+        Log.i("FCM", "onMessageReceived called. From: ${remoteMessage.from}")
 
         val title = remoteMessage.notification?.title ?: remoteMessage.data["title"] ?: "Inventour"
         val body = remoteMessage.notification?.body ?: remoteMessage.data["body"] ?: ""
         val type = remoteMessage.data["type"]
+
+        Log.i("FCM", "Message details: Title=$title, Body=$body, Type=$type")
 
         showNotification(title, body, type)
     }
